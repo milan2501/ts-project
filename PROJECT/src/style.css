@@ -1,0 +1,28 @@
+body {
+  background-color: #e7a0a0;
+  font-family: Arial, sans-serif;
+}
+#infoAboutMovie {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.frame {
+    max-width: 200px;
+    margin: 10px;
+}
+
+.movieImg {
+    max-width: 100%;
+}
+
+.form-select {
+    width: "80px";
+    height: "21px";
+    margin: "20px";
+}
+
+.form-control {
+    width: 50px;
+}
+

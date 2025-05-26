@@ -1,21 +1,16 @@
 import { createMovieCard } from "./components/movieCard";
 import { editSearchForm, findBtn, insertValues } from "./components/searchForm";
-import { callOmdbApi } from "./services/omdbApiServices";
+import './style.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 
 editSearchForm();
 
 findBtn?.addEventListener("click", async () => {
     const response = await insertValues();
     createMovieCard(response.data);
+    console.log(response);
 });
-
-
-/*
-ispisati podatke iz search-a
-ako nismo dobili nikakve podatke, onda uraditi pretragu samo po search-u, bez godine
-*/
-
-
 
 
 

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ApiParametersInterface } from "../interfaces/apiParamsInterfaces";
+import { ApiParametersInterface } from "../interfaces/apiParamsInterface";
 import { ApiResponseInterface } from "../interfaces/apiResponseInterface";
 const API_URL = 'https://www.omdbapi.com/';
 const API_KEY = '180c6fcc';
@@ -10,7 +10,7 @@ function buildApi(params: ApiParametersInterface[]): string {
     params.forEach(param => {
         searchParams += `${param.key}=${param.value}&`;
     });
-    return API_URL+"?"+searchParams+"apiKey="+API_KEY;
+     return API_URL+"?"+searchParams+"apiKey="+API_KEY;
 }
 
 export async function callOmdbApi(params: ApiParametersInterface[]): Promise<ApiResponseInterface> {

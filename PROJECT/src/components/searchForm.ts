@@ -1,23 +1,42 @@
 import { ApiResponseInterface } from "../interfaces/apiResponseInterface";
+import { errorResponseInterface } from "../interfaces/errorResponseInterface";
+import { successResponseInterface } from "../interfaces/successResponseInterface";
 import { callOmdbApi } from "../services/omdbApiServices";
-
+import { setHistoryManager, removeHistoryManager } from "./searchHistoryManager";
+ 
 const container = document.querySelector("#container") as HTMLElement | null;
+const inputRow = document.createElement("div");
+inputRow.classList.add("d-flex", "align-items-center", "mb-3", "gap-2", "w-100");
+
 export const findBtn = document.createElement("button");
+findBtn.classList.add('btn', 'btn-primary', 'm-3');
 findBtn.textContent = "Find Movie";
+findBtn.style.width = "15%"
 
 let nameOfMovie = document.createElement("input");
+nameOfMovie.classList.add('form-control', 'form-control-sm', 'me-3');
 nameOfMovie.placeholder = "Name of Movie";
+nameOfMovie.style.width = "15%";
+
 
 let yearOfProduction = document.createElement("select");
-yearOfProduction.style.width = "80px";
-yearOfProduction.style.height = "21px";
-yearOfProduction.style.margin = "20px";
+yearOfProduction.classList.add('form-select', 'form-select-sm');
+yearOfProduction.style.width = "15%";
+
+const suggestedParagraph = document.createElement("p");
+suggestedParagraph.classList.add("mt-3", "text-muted");
+suggestedParagraph.style.display = "none";
 
 export let chosenYear: string = "";
 export let chosenName: string = "";
 
+
 export function editSearchForm(): void {
+
     if (container) {
+
+        container.classList.add('d-flex', 'flex-column', 'align-items-start');
+
         for (let i: number = 1960; i <= 2025; i++) {
             let yearOptions = document.createElement("option");
             const emptyOption = document.createElement("option");
@@ -31,7 +50,8 @@ export function editSearchForm(): void {
             yearOfProduction.append(emptyOption, yearOptions);
         }
 
-        container.append(nameOfMovie, yearOfProduction, findBtn);
+        inputRow.append(nameOfMovie, yearOfProduction, findBtn);
+        container.append(inputRow, suggestedParagraph);
 
         nameOfMovie.addEventListener("input", (e) => {
             const target = e.currentTarget as HTMLInputElement;
@@ -44,21 +64,42 @@ export function editSearchForm(): void {
         });
     }
 }
+
 export async function insertValues(): Promise<ApiResponseInterface> {
-  const firstParam = { key: "s", value: chosenName };
-  const secondParam = { key: "y", value: chosenYear };
+    const firstParam = { key: "s", value: chosenName };
+    const secondParam = { key: "y", value: chosenYear };
 
-  const fullSearchRes = await callOmdbApi([firstParam, secondParam]);
+    const fullSearchRes = await callOmdbApi([firstParam, secondParam]);
+    const fallbackRes = await callOmdbApi([firstParam]);
 
-  if (fullSearchRes.data.Response === "True" && fullSearchRes.data.Search) {
+    const fullErrorData = fullSearchRes.data as errorResponseInterface;
+    const fallSuccesData = fallbackRes.data as successResponseInterface;
+
+    if (chosenName !== "" && chosenYear !== "") {
+        setHistoryManager(chosenName, chosenYear);
+    }
+
+    if (fullErrorData.Response === "False") {
+
+
+        alert("Sorry, we did not find that movie!");
+
+        if (!fallSuccesData.Search) {
+            const fallErrorData = fallbackRes.data as errorResponseInterface;
+            suggestedParagraph.textContent = fallErrorData.Error;
+            removeHistoryManager(chosenName);
+        } else {
+            suggestedParagraph.textContent =
+                "Unfortunately, we don't have this movie, but we have other movie suggestions for you: ";
+        }
+        suggestedParagraph.classList.add("mt-3", "fw-bold", "fst-italic", "text-danger");
+        suggestedParagraph.style.display = "block";
+
+        return fallbackRes;
+
+    }
     return fullSearchRes;
-  }
-
-  const fallbackRes = await callOmdbApi([firstParam]);
-
-  return fallbackRes;
 }
-
 
 
 
