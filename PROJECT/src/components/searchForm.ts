@@ -1,8 +1,11 @@
+import { clearStorage, inputNameOfMovie, inputYearOfMovie } from "../events/myEvents";
 import { ApiResponseInterface } from "../interfaces/apiResponseInterface";
 import { errorResponseInterface } from "../interfaces/errorResponseInterface";
 import { callOmdbApi } from "../services/omdbApiServices";
+import { lastSearch, renderSavedMovies } from "../ui/renderPreviousSearches";
+import { yearOfProduction } from "./helper";
 import { setHistoryManager } from "./searchHistoryManager";
- 
+
 const container = document.querySelector("#container") as HTMLElement | null;
 const inputRow = document.createElement("div");
 inputRow.classList.add("d-flex", "align-items-center", "mb-3", "gap-2", "w-100");
@@ -12,65 +15,47 @@ findBtn.classList.add('btn', 'btn-primary', 'm-3');
 findBtn.textContent = "Find Movie";
 findBtn.style.width = "15%"
 
+export const clearButton = document.createElement("button");
+clearButton.classList.add('btn', 'btn-primary', 'm-3');
+clearButton.textContent = "Clear Search History";
+clearButton.style.width = "15%"
+
 let nameOfMovie = document.createElement("input");
 nameOfMovie.classList.add('form-control', 'form-control-sm', 'me-3');
 nameOfMovie.placeholder = "Name of Movie";
 nameOfMovie.style.width = "15%";
 
-
-let yearOfProduction = document.createElement("select");
-yearOfProduction.classList.add('form-select', 'form-select-sm');
-yearOfProduction.style.width = "15%";
-const emptyOption = document.createElement("option");
-emptyOption.value = "";
-emptyOption.disabled = true;
-emptyOption.hidden = true;
-emptyOption.selected = true;
-emptyOption.textContent = "Years";
-
 const suggestedParagraph = document.createElement("p");
-suggestedParagraph.classList.add("mt-3", "text-muted");
-suggestedParagraph.style.display = "none";
+suggestedParagraph.classList.add("mt-3", "fw-bold", "fst-italic", "text-danger");
+suggestedParagraph.style.display = "block";
 
-
-export let chosenYear: string = "";
-export let chosenName: string = "";
 
 
 export function editSearchForm(): void {
 
     if (container) {
 
-        container.classList.add('d-flex', 'flex-column', 'align-items-start');
-         yearOfProduction.append(emptyOption);
-        for (let i: number = 1960; i <= 2025; i++) {
-            let yearOptions = document.createElement("option");
-            yearOptions.textContent = i.toString();
-            yearOptions.value = i.toString();
-            yearOfProduction.append(yearOptions);
-        }
+        container.classList.add('d-flex', 'flex-column', 'align-items-start', 'p-2');
 
-        inputRow.append(nameOfMovie, yearOfProduction, findBtn);
-        container.append(inputRow, suggestedParagraph);
+        inputRow.append(nameOfMovie, yearOfProduction, findBtn, clearButton);
+        container.append(inputRow, lastSearch, suggestedParagraph);
 
-        nameOfMovie.addEventListener("input", (e) => {
-            const target = e.currentTarget as HTMLInputElement;
-            chosenName = target.value;
-        });
+        clearButton.addEventListener('click', clearStorage);
 
-        yearOfProduction.addEventListener("change", (e) => {
-            const target = e.currentTarget as HTMLSelectElement;
-            chosenYear = target.value;
-        });
+        nameOfMovie.addEventListener("input", inputNameOfMovie);
+
+        yearOfProduction.addEventListener("change", inputYearOfMovie);
     }
 }
 
 export async function insertValues(): Promise<ApiResponseInterface> {
+    let name = nameOfMovie.value;
+    let year = yearOfProduction.value;
 
-    if (chosenName.trim() === '') alert ("Enter movie please!");
+    if (name.trim() === '') alert("Enter movie please!");
 
-    const firstParam = { key: "s", value: chosenName };
-    const secondParam = { key: "y", value: chosenYear };
+    const firstParam = { key: "s", value: name };
+    const secondParam = { key: "y", value: year };
 
     const fullResponse = await callOmdbApi([firstParam, secondParam]);
     const nonFullResponse = await callOmdbApi([firstParam]);
@@ -85,24 +70,18 @@ export async function insertValues(): Promise<ApiResponseInterface> {
             suggestedParagraph.textContent = nonFullErrorResponse.Error;
 
         } else {
-
-            suggestedParagraph.textContent = 
-            "Sorry, we couldn't find a movie with that exact name. But here are some similar titles you might be interested in!";
+            suggestedParagraph.textContent =
+                "Sorry, we couldn't find a movie with that exact name. But here are some similar titles you might be interested in!";
             return nonFullResponse;
-
         }
-        suggestedParagraph.classList.add("mt-3", "fw-bold", "fst-italic", "text-danger");
-        suggestedParagraph.style.display = "block";
-    } else {
-        setHistoryManager({name: chosenName, year: chosenYear});
 
+    } else {
+        setHistoryManager({ name: name, year: year });
+        renderSavedMovies()
     }
 
     return fullResponse;
-}
-
-                
-
+};
 
 
 
